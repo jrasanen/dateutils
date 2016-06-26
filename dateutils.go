@@ -2,7 +2,10 @@ package dateutils
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -66,4 +69,101 @@ func ParseDateTime(inputDate string) (*DateTime, error) {
 	}
 
 	return dateStruct, err
+}
+
+type TimePart struct {
+	name    string
+	divider float64
+	p       string
+	s       string
+}
+
+var fuzzyTimeParts = []TimePart{
+	TimePart{
+		name:    "millenni",
+		divider: 31556736000,
+		p:       "a",
+		s:       "um",
+	},
+	TimePart{
+		name:    "centur",
+		divider: 3155673600,
+		p:       "ies",
+		s:       "y",
+	},
+	TimePart{
+		name:    "decade",
+		divider: 315567360,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "year",
+		divider: 31556736,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "month",
+		divider: 2629728,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "day",
+		divider: 86400,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "hour",
+		divider: 3600,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "minute",
+		divider: 60,
+		p:       "",
+		s:       "",
+	},
+	TimePart{
+		name:    "second",
+		divider: 1,
+		p:       "",
+		s:       "",
+	},
+}
+
+func FuzzyTime(inputDate string) string {
+	parsedDate, err := ParseDateTime(inputDate)
+	if err != nil {
+		panic(err)
+	}
+
+	now := float64(time.Now().Unix())
+	then := float64(parsedDate.date.Unix())
+	interval := math.Floor(now - then)
+
+	i := 0
+	var parts []string
+
+	for interval > 0 {
+		value := math.Floor(interval / fuzzyTimeParts[i].divider)
+		interval = interval - (value * fuzzyTimeParts[i].divider)
+		if value > 0 {
+			timeInWords := fuzzyTimeParts[i].name
+			if value != 1 {
+				timeInWords += fuzzyTimeParts[i].p
+			} else {
+				timeInWords += fuzzyTimeParts[i].s
+			}
+			parts = append(parts, fmt.Sprintf("%v %v", value, timeInWords))
+		}
+		i++
+	}
+	if len(parts) < 1 {
+		return "now"
+	}
+	return strings.Join(parts, " ")
 }

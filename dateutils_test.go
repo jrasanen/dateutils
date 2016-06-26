@@ -55,3 +55,7 @@ func TestParseDateTimeError(t *testing.T) {
 		panic(fmt.Sprintf("expected an error, got nil"))
 	}
 }
+
+func TestFuzzyTime(t *testing.T) {
+	fmt.Println(FuzzyTime("2019-06-26 12:00"))
+}
